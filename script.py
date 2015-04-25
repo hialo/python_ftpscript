@@ -1,6 +1,3 @@
-#user:saltar
-#senha:Cl@udi0S@lt
-
 import ftplib
 import os
 import time
@@ -15,7 +12,7 @@ def connect():
 	#ftp = FTP('ftp2.dissect.pe')
 	ftp = FTP('ftp.osuosl.org')
 	try:
-		#login = ftp.login ('saltar', 'Cl@udi0S@lt')
+		#login = ftp.login ('user', 'pass')
 		#print ftp.getwelcome()
 		login = ftp.login()
 		print 'Conexao/login efetuado com sucesso.'
