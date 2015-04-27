@@ -1,2 +1,3 @@
-# python_ftpscript
-Script for automatic access and download of files in a FTP server.
+Script for automatic access and file downloads in a FTP server.
+
+Usage: script.py -u USER -p PASSWORD

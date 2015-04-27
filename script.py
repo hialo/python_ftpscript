@@ -1,28 +1,32 @@
+#!/usr/bin/python
+
 import ftplib
 import os
 import time
-import sys
+import sys, getopt
 from ftplib import FTP
 
 path = '/home/hialo/UnB/teste'
 
-# TODO: Metodo para verificar a integridade do arquivo recebido. Tratamentos de excecao. Singleton para a conexao FTP?
+def connect(user, pwd):
+	ftp = FTP('ftp2.dissect.pe')
 
-def connect():
-	#ftp = FTP('ftp2.dissect.pe')
-	ftp = FTP('ftp.osuosl.org')
+	#ftp = FTP('ftp.mozilla.org')
+	#login = ftp.login()
 	try:
-		#login = ftp.login ('user', 'pass')
-		#print ftp.getwelcome()
-		login = ftp.login()
-		print 'Conexao/login efetuado com sucesso.'
+		login = ftp.login (user, pwd)
 
-		ftp.cwd ('/debian-cd/7.8.0/amd64/bt-cd')
+		print 'Conexao/login efetuado com sucesso.'
+		print ftp.getwelcome()
+
+		ftp.cwd ('/ftp')
+		#ftp.cwd ('/pub/mozilla.org/artwork')
 
 		return ftp
 
 	except ftplib.all_errors:
 		print 'ERRO: Nao foi possivel conectar ao servidor FTP.'
+		cleanExit()
 
 
 #############################################################################
@@ -66,21 +70,35 @@ def downloadFile(filename, ftp):
 
 def gettingNewFiles(ftplist, filelist, conn):
 	newfiles = retrievingNewFileNames(ftplist, filelist)
+	filename = ''
 
 	if newfiles:
-		print "Existem " + str(len(newfiles)) + " arquivos a serem baixados."
+		try:
+			print "Existem " + str(len(newfiles)) + " arquivos a serem baixados."
 
-		for i in range (0, len(newfiles)):
-			downloadFile(newfiles[i], conn)
+			for i in range (0, len(newfiles)):
+				filename = newfiles[i]
+				downloadFile(filename, conn)
 
-			print 'Download do arquivo ' + str(i + 1) + ' efetuado. Verificando integridade...'
+				print 'Download do arquivo ' + str(i + 1) + ' efetuado. Verificando integridade...'
 
-			try:
-				writingLogFile(newfiles[i], os.path.getsize(newfiles[i]))
+				if (verifyingIntegrity(filename, conn.size(filename)) == 1):
+					print 'O tamanho do arquivo nao confere. Tentando novamente o download...'
+					os.remove(filename)
+					downloadFile(filename, conn)
 
-			except os.error:
-				print "ERRO: Nao foi possivel obter o tamanho do arquivo."
-				writingLogFile(newfiles[i], 0)			
+				try:
+					writingLogFile(newfiles[i], os.path.getsize(newfiles[i]))
+
+				except os.error:
+					print "ERRO: Nao foi possivel obter o tamanho do arquivo."
+					writingLogFile(newfiles[i], 0)
+
+		except KeyboardInterrupt:
+			print 'Download do arquivo interrompido. Finalizando...'
+			os.remove(filename)	
+
+			cleanExit()
 
 	else:
 		print 'Nao existem novos arquivos a serem baixados.'
@@ -97,13 +115,39 @@ def writingLogFile(filename, filesize):
 
 #############################################################################
 
-def verifyingIntegrity():
-	print 'nothing'
+def verifyingIntegrity(filename, ftp_size):
+	if (os.path.getsize(filename) == ftp_size):
+		return 0
+	else:
+		return 1
 
 #############################################################################
 
-def main():
-	ftp = connect()
+def cleanExit():
+	try:
+		sys.exit(0)
+	except SystemExit:
+		os._exit(0)	
+
+#############################################################################	
+
+def main(argv):
+	user = ''
+	pwd  = ''
+	
+	try:
+		myopts, args = getopt.getopt(argv, "u:p:")
+	except getopt.GetoptError:
+		print "Usage: script.py -u USER -p PASSWORD"
+		cleanExit()
+
+	for opt, arg in myopts:
+		if opt == '-u':
+			user = arg
+		elif opt == '-p':
+			pwd = arg
+
+	ftp = connect(user, pwd)
 	currdir = os.getcwd()
 
 	os.chdir(path)
@@ -121,11 +165,9 @@ def main():
 
 if __name__ == '__main__':
     try:
-        main()
+        main(sys.argv[1:])
     except KeyboardInterrupt:
-        print 'Interrompido'
+        print 'Interrompido.'
 
-        try:
-            sys.exit(0)
-        except SystemExit:
-            os._exit(0)
+        cleanExit()
+		
