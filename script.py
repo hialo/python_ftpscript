@@ -6,7 +6,7 @@ import time
 import sys, getopt
 from ftplib import FTP
 
-path = '/home/hialo/UnB/teste'
+path = os.getcwd() + '/archives'
 
 def connect(user, pwd):
 	ftp = FTP('ftp2.dissect.pe')
