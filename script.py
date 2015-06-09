@@ -6,7 +6,7 @@ import time
 import sys, getopt
 from ftplib import FTP
 
-path = os.getcwd() + '/archives'
+path = os.getenv("HOME") + "/SALTAR/ftp_files"
 
 def connect(user, pwd):
 	ftp = FTP('ftp2.dissect.pe')
